@@ -1,7 +1,7 @@
 {
   "name": "nodejs-hw-mongodb",
   "version": "1.0.0",
-  "description": "homework",
+  "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "dev": "nodemon src/index.js"
   },
   "keywords": [],
-  "author": "Vladyslav Bihun <bihunvv@gmail.com>",
+  "author": "Daria Shevchenko",
   "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.8.0",
@@ -21,9 +21,9 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "mongoose": "^8.8.4",
-    "pino-http": "^10.3.0"
+    "mongoose": "^8.5.1",
+    "pino-http": "^10.2.0"
   }
 }
