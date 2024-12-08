@@ -1,30 +1,15 @@
-import { SORT_ORDER } from '../constants/index.js';
+const sortOrderList = ["asc", "desc"];
 
-const parseSortOrder = (sortOrder) => {
-  const isKnownOrder = [SORT_ORDER.ASC, SORT_ORDER.DESC].includes(sortOrder);
+export const parseSortParams = ({ sortBy, sortOrder }, sortByList) => {
+  
+  const parsedSortOrder = sortOrderList.includes(sortOrder) ? sortOrder : sortOrderList[0];
+  
+  const parsedSortBy = sortByList.includes(sortBy) ? sortBy : 'name';
 
-  if (isKnownOrder) return sortOrder;
-  return SORT_ORDER.ASC;
-};
-
-const parseSortBy = (sortBy) => {
-  const sortByParam = 'name';
-
-  if (sortByParam.includes(sortBy)) {
-    return sortBy;
-  }
-
-  return '_id';
-};
-
-export const parseSortParams = (query) => {
-  const { sortOrder, sortBy } = query;
-
-  const parsedSortOrder = parseSortOrder(sortOrder);
-  const parsedSortBy = parseSortBy(sortBy);
-
+  console.log(`Sorting by: ${parsedSortBy} in ${parsedSortOrder} order`);
+  
   return {
-    sortOrder: parsedSortOrder,
     sortBy: parsedSortBy,
+    sortOrder: parsedSortOrder,
   };
 };
