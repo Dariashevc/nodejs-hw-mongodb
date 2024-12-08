@@ -1,49 +1,20 @@
-import { Router } from 'express';
-import { ctrlWrapper } from '../utils/ctrlWrapper.js';
-import {
-  registerUserSchema,
-  loginUserSchema,
-  sendResetEmailSchema,
-  resetPasswordSchema,
-} from '../validation/auth.js';
-import {
-  registerUserController,
-  loginUserController,
-  logoutUserController,
-  refreshUsersSessionController,
-  sendResetEmailController,
-  resetPasswordController,
-} from '../controllers/auth.js';
-import { validateBody } from '../middlewares/validateBody.js';
+import express from 'express';
+import { registerController, loginController, refreshController, logoutController } from '../controllers/auth.js';
+import validateBody from '../utils/validateBody.js';
+import {authRegisterSchema, authLoginSchema} from '../validation/auth.js';
+import { sendResetEmailController, resetPasswordController  } from '../controllers/auth.js';
+import { emailSchema } from '../validation/auth.js';
 
-const router = Router();
 
-router.post(
-  '/register',
-  validateBody(registerUserSchema),
-  ctrlWrapper(registerUserController),
-);
+const authRouter = express.Router();
 
-router.post(
-  '/login',
-  validateBody(loginUserSchema),
-  ctrlWrapper(loginUserController),
-);
+authRouter.post('/register', validateBody(authRegisterSchema), registerController);
 
-router.post('/refresh', ctrlWrapper(refreshUsersSessionController));
+authRouter.post("/login", validateBody(authLoginSchema), loginController);
+authRouter.post('/send-reset-email', validateBody(emailSchema), sendResetEmailController);
+authRouter.post("/reset-pwd", resetPasswordController);
 
-router.post('/logout', ctrlWrapper(logoutUserController));
+authRouter.post('/refresh', refreshController);
+authRouter.post("/logout", logoutController);
 
-router.post(
-  '/send-reset-email',
-  validateBody(sendResetEmailSchema),
-  ctrlWrapper(sendResetEmailController),
-);
-
-router.post(
-  '/reset-pwd',
-  validateBody(resetPasswordSchema),
-  ctrlWrapper(resetPasswordController),
-);
-
-export default router;
+export default authRouter;
