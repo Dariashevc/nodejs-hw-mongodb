@@ -1,77 +1,96 @@
-import { THIRTY_DAYS } from '../constants/index.js';
-import {
-  registerUser,
-  loginUser,
-  logoutUser,
-  refreshUsersSession,
-} from '../services/auth.js';
+import createHttpError from "http-errors";
+import * as authServices from '../services/auth.js';
+import { ctrlWrapper } from '../utils/ctrlWrapper.js';
+import { login } from "../services/auth.js";
+const setupSession = (res, session)=> {
+  const {_id, refreshToken, refreshTokenValidUntil} = session;
 
-export const registerUserController = async (req, res) => {
-  const user = await registerUser(req.body);
-
-  res.status(201).json({
-    status: 201,
-    message: 'Successfully registered a user!',
-    data: user,
+  res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      expires: refreshTokenValidUntil
   });
+
+  res.cookie("sessionId", _id, {
+      httpOnly: true,
+      expires: refreshTokenValidUntil
+  });
+}
+
+export const registerController = async (req, res, next) => {
+  try {
+    const data = await authServices.register(req.body);
+
+    res.status(201).json({
+      status: 201,
+      message: 'Successfully registered a user!',
+      data: data,
+    });
+  } catch (err) {
+    next(err); 
+  }
 };
 
-export const loginUserController = async (req, res) => {
-  const session = await loginUser(req.body);
+export const loginController = async (req, res, next) => {
+  try {
+    const session = await authServices.login(req.body);
 
-  res.cookie('refreshToken', session.refreshToken, {
-    httpOnly: true,
-    expires: new Date(Date.now() + THIRTY_DAYS),
-  });
-  res.cookie('sessionId', session._id, {
-    httpOnly: true,
-    expires: new Date(Date.now() + THIRTY_DAYS),
-  });
+    setupSession(res, session);
 
-  res.json({
-    status: 200,
-    message: 'Successfully logged in an user!',
-    data: {
-      accessToken: session.accessToken,
-    },
-  });
+    res.json({
+      status: 200,
+      message: "Successfully login user",
+      data: {
+        accessToken: session.accessToken,
+      },
+    });
+  } catch (err) {
+    next(err); 
+  }
 };
 
-const setupSession = (res, session) => {
-  res.cookie('refreshToken', session.refreshToken, {
+
+export const refreshController = ctrlWrapper(async (req, res) => {
+  const { refreshToken, sessionId } = req.cookies;
+
+  if (!refreshToken || !sessionId) {
+    throw createHttpError(401, 'Missing refresh token or session ID');
+  }
+
+  const newSession = await authServices.refreshSession({ refreshToken, sessionId });
+
+  res.cookie('refreshToken', newSession.refreshToken, {
     httpOnly: true,
-    expires: new Date(Date.now() + THIRTY_DAYS),
+    expires: newSession.refreshTokenValidUntil,
   });
-  res.cookie('sessionId', session._id, {
+
+  res.cookie('sessionId', newSession._id, {
     httpOnly: true,
-    expires: new Date(Date.now() + THIRTY_DAYS),
-  });
-};
-
-export const refreshUsersSessionController = async (req, res) => {
-  const session = await refreshUsersSession({
-    sessionId: req.cookies.sessionId,
-    refreshToken: req.cookies.refreshToken,
+    expires: newSession.refreshTokenValidUntil,
   });
 
-  setupSession(res, session);
-
-  res.json({
+  res.status(200).json({
     status: 200,
     message: 'Successfully refreshed a session!',
     data: {
-      accessToken: session.accessToken,
+      accessToken: newSession.accessToken,
     },
   });
-};
+});
 
-export const logoutUserController = async (req, res) => {
-  if (req.cookies.sessionId) {
-    await logoutUser(req.cookies.sessionId);
+export const logoutController = ctrlWrapper(async (req, res) => {
+  
+  const { sessionId, refreshToken } = req.cookies;
+
+  if (!sessionId || !refreshToken) {
+    throw createHttpError(400, "Missing sessionId or refreshToken in cookies");
   }
 
-  res.clearCookie('sessionId');
-  res.clearCookie('refreshToken');
+  
+  await authServices.logout(sessionId, refreshToken);
 
+  res.clearCookie("sessionId");
+  res.clearCookie("refreshToken");
+
+  
   res.status(204).send();
-};
+});
