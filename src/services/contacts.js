@@ -1,38 +1,49 @@
-import { ContactsCollection } from '../db/models/model.js';
+import Contacts from '../db/models/Contacts.js';
 
-export const getAllContacts = async () => {
-  const contacts = await ContactsCollection.find();
-  return contacts;
+export const getContacts = async () => {
+  try {
+    const contacts = await Contacts.find();
+    return contacts;
+  } catch (error) {
+    throw new Error('Error fetching contacts');
+  }
 };
 
 export const getContactById = async (contactId) => {
-  const contact = await ContactsCollection.findById(contactId);
-  return contact;
+  try {
+    const contact = await Contacts.findById(contactId);
+    return contact;
+  } catch (error) {
+    throw new Error('Error fetching contact from database: ' + error.message);
+  }
 };
 
-export const createContact = async (payload) => {
-  const contact = await ContactsCollection.create(payload);
-  return contact;
+export const createContact = async (contactData) => {
+  const newContact = new Contacts(contactData);
+
+  await newContact.save();
+
+  return newContact;
 };
 
-export const updateContact = async (contactId, payload, options = {}) => {
-  const updatedContact = await ContactsCollection.findOneAndUpdate(
-    { _id: contactId },
-    payload,
-    {
+export const updateContact = async (contactId, updateData) => {
+  try {
+    const contact = await Contacts.findByIdAndUpdate(contactId, updateData, {
       new: true,
-    },
-  );
+    });
 
-  if (!updatedContact) return null;
-
-  return updatedContact;
+    return contact;
+  } catch (error) {
+    throw new Error('Error updating contact');
+  }
 };
 
 export const deleteContact = async (contactId) => {
-  const contact = await ContactsCollection.findOneAndDelete({
-    _id: contactId,
-  });
+  try {
+    const contact = await Contacts.findByIdAndDelete(contactId);
 
-  return contact;
+    return contact;
+  } catch (error) {
+    throw new Error('Error deleting contact');
+  }
 };
