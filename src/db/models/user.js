@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { emailRegexp } from '../../constants/users.js';
+import { emailRegexp } from '../../constants/users';
 
 const { Schema, model } = mongoose;
 
