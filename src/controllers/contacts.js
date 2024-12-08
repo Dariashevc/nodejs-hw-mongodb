@@ -52,29 +52,42 @@ export const getContactByIdController = async (req, res) => {
   });
 };
 
-export const createContactController = async (req, res) => {
-  const photo = req.file;
+export const createContact = ctrlWrapper(async (req, res) => {
+  const { _id: userId } = req.user;
+  const { name, phoneNumber, email, isFavourite, contactType } = req.body;
 
-  let photoUrl;
-
-  if (photo) {
-    photoUrl = await saveFileToCloudinary(photo);
+  if (!name || !phoneNumber || !contactType) {
+    throw createError(400, 'Missing required fields: name, phoneNumber, or contactType');
   }
 
-  const payload = {
-    ...req.body,
-    userId: req.user._id,
-    photo: photoUrl,
-  };
+  let photo = null;
+  if (req.file) {
+    try {
+      photo = await saveFileToCloudinary(req.file, 'contacts');
+    } catch (error) {
+      throw createError(500, 'Failed to upload photo to Cloudinary');
+    }
+  }
 
-  const contact = await createContact(payload);
+  const newContact = await contactServices.createContact(userId, {
+    name,
+    phoneNumber,
+    email,
+    isFavourite,
+    contactType,
+    photo,
+  });
+
+  const contactWithoutVersion = newContact.toObject();
+  delete contactWithoutVersion.__v;
 
   res.status(201).json({
     status: 201,
     message: 'Successfully created a contact!',
-    data: contact,
+    data: contactWithoutVersion,
   });
-};
+});
+
 
 export const patchContactController = async (req, res) => {
   const { contactId } = req.params;
