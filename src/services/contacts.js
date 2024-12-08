@@ -1,76 +1,76 @@
-import Contacts from '../db/models/Contacts.js';
+import { ContactsCollection } from '../db/models/model.js';
+
 import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 
-const allowedSortFields = ['name', 'phoneNumber', 'email'];
+import { SORT_ORDER } from '../constants/index.js';
 
-export const getContacts = async ({ userId, page = 1, perPage = 10, sortBy = 'name', sortOrder = 'asc', filter = {} }) => {
-  try {
-    if (!allowedSortFields.includes(sortBy)) {
-      sortBy = 'name';
-    }
+export const getAllContacts = async ({
+  page = 1,
+  perPage = 10,
+  sortOrder = SORT_ORDER.ASC,
+  sortBy = '_id',
+  userId,
+}) => {
+  const limit = perPage;
+  const skip = (page - 1) * perPage;
 
-    if (sortOrder !== 'asc' && sortOrder !== 'desc') {
-      sortOrder = 'asc';
-    }
+  const contactsQuery = ContactsCollection.find({ userId });
+  const contactsCount = await ContactsCollection.find({ userId })
+    .merge(contactsQuery)
+    .countDocuments();
 
-    const query = Contacts.find({ ...filter, userId });
+  const data = await contactsQuery
+    .skip(skip)
+    .limit(limit)
+    .sort({ [sortBy]: sortOrder })
+    .exec();
 
-    const skip = (page - 1) * perPage;
+  const paginationData = calculatePaginationData(contactsCount, perPage, page);
 
-    const sort = {};
-    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
-
-    const contacts = await query.skip(skip).limit(perPage).sort(sort);
-
-    const totalItems = await Contacts.countDocuments({ ...filter, userId });
-    const paginationData = calculatePaginationData({ totalItems, page, perPage });
-
-    return {
-      data: contacts,
-      ...paginationData,
-    };
-  } catch (error) {
-    throw new Error('Error fetching contacts: ' + error.message);
-  }
+  return {
+    data: data,
+    ...paginationData,
+  };
 };
 
-export const getContactById = async (userId, contactId) => {
-  try {
-    const contact = await Contacts.findOne({ _id: contactId, userId });
-    return contact;
-  } catch (error) {
-    throw new Error('Error fetching contact from database: ' + error.message);
-  }
+export const getContactById = async (contactId, userId) => {
+  const contact = await ContactsCollection.findOne({
+    _id: contactId,
+    userId: userId,
+  });
+
+  return contact;
 };
 
-export const createContact = async (userId, contactData) => {
-  const newContact = new Contacts({ ...contactData, userId });
-
-  await newContact.save();
-
-  return newContact;
+export const createContact = async (payload) => {
+  const contact = await ContactsCollection.create(payload);
+  return contact;
 };
 
-export const updateContact = async (userId, contactId, updateData) => {
-  try {
-    const contact = await Contacts.findOneAndUpdate(
-      { _id: contactId, userId },
-      updateData,
-      { new: true }
-    );
+export const updateContact = async (
+  contactId,
+  userId,
+  payload,
+  options = {},
+) => {
+  const updatedContact = await ContactsCollection.findOneAndUpdate(
+    { _id: contactId, userId },
+    payload,
+    {
+      new: true,
+    },
+  );
 
-    return contact;
-  } catch (error) {
-    throw new Error('Error updating contact');
-  }
+  if (!updatedContact) return null;
+
+  return updatedContact;
 };
 
-export const deleteContact = async (userId, contactId) => {
-  try {
-    const contact = await Contacts.findOneAndDelete({ _id: contactId, userId });
+export const deleteContact = async (contactId, userId) => {
+  const contact = await ContactsCollection.findOneAndDelete({
+    _id: contactId,
+    userId,
+  });
 
-    return contact;
-  } catch (error) {
-    throw new Error('Error deleting contact');
-  }
+  return contact;
 };
