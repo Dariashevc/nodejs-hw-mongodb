@@ -4,6 +4,7 @@ import { sendResetEmail } from "../utils/sendResetEmail.js";
 import { ctrlWrapper } from "../utils/ctrlWrapper.js";
 import jwt from "jsonwebtoken";
 import UserCollection from "../db/models/user.js";
+import SessionCollection from "../db/models/session.js";
 
 const setupSession = (res, session) => {
     const { _id, refreshToken, refreshTokenValidUntil } = session;
@@ -52,28 +53,27 @@ export const loginController = ctrlWrapper(async (req, res) => {
 
 
 export const sendResetEmailController = ctrlWrapper(async (req, res) => {
-  const { email } = req.body;
-
-  console.log("Request received for sending reset email to:", email);
-
-  if (!email) {
-    console.error("Email is missing in the request");
-    throw createHttpError(400, "Email is required");
-  }
-
-  try {
-    await sendResetEmail(email);
-    console.log("Reset email sent successfully");
-    res.status(200).json({
-      status: 200,
-      message: "Reset password email has been successfully sent.",
-      data: {},
-    });
-  } catch (error) {
-    console.error("Failed to send reset email:", error);
-    throw createHttpError(500, "Failed to send the email, please try again later.");
-  }
-});
+    const { email } = req.body;
+  
+    if (!email) {
+      throw createHttpError(400, "Email is required");
+    }
+  
+    try {
+      
+      await sendResetEmail(email);
+  
+      
+      res.status(200).json({
+        status: 200,
+        message: "Reset password email has been successfully sent.",
+        data: {},
+      });
+    } catch (error) {
+      
+      throw createHttpError(500, "Failed to send the email, please try again later.");
+    }
+  });
 
   export const resetPasswordController = ctrlWrapper(async (req, res) => {
     const { token, password } = req.body;
@@ -116,12 +116,24 @@ export const sendResetEmailController = ctrlWrapper(async (req, res) => {
   });
 
 
-export const refreshController = ctrlWrapper(async (req, res) => {
+  export const refreshController = ctrlWrapper(async (req, res) => {
     const { refreshToken, sessionId } = req.cookies;
 
     if (!refreshToken || !sessionId) {
         throw createHttpError(401, "Missing refresh token or session ID");
     }
+
+    console.log("sessionId from cookies:", sessionId);
+    console.log("refreshToken from cookies:", refreshToken);
+
+    const session = await SessionCollection.findOne({ _id: ObjectId(sessionId), refreshToken });
+
+    if (!session) {
+        console.log("Session not found for sessionId:", sessionId, "and refreshToken:", refreshToken);
+        throw createHttpError(404, "Session not found");
+    }
+
+    console.log("Session found:", session);
 
     const newSession = await authServices.refreshSession({ refreshToken, sessionId });
 
@@ -151,6 +163,12 @@ export const logoutController = ctrlWrapper(async (req, res) => {
     if (!sessionId || !refreshToken) {
         throw createHttpError(400, "Missing sessionId or refreshToken in cookies");
     }
+    
+console.log("sessionId from cookies:", sessionId);
+console.log("refreshToken from cookies:", refreshToken);
+
+const session = await SessionCollection.findOne({ _id: sessionId, refreshToken });
+console.log("Session found:", session);
 
     await authServices.logout(sessionId, refreshToken);
 
