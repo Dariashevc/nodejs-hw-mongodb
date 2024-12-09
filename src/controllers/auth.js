@@ -52,27 +52,28 @@ export const loginController = ctrlWrapper(async (req, res) => {
 
 
 export const sendResetEmailController = ctrlWrapper(async (req, res) => {
-    const { email } = req.body;
-  
-    if (!email) {
-      throw createHttpError(400, "Email is required");
-    }
-  
-    try {
-      
-      await sendResetEmail(email);
-  
-      
-      res.status(200).json({
-        status: 200,
-        message: "Reset password email has been successfully sent.",
-        data: {},
-      });
-    } catch (error) {
-      
-      throw createHttpError(500, "Failed to send the email, please try again later.");
-    }
-  });
+  const { email } = req.body;
+
+  console.log("Request received for sending reset email to:", email);
+
+  if (!email) {
+    console.error("Email is missing in the request");
+    throw createHttpError(400, "Email is required");
+  }
+
+  try {
+    await sendResetEmail(email);
+    console.log("Reset email sent successfully");
+    res.status(200).json({
+      status: 200,
+      message: "Reset password email has been successfully sent.",
+      data: {},
+    });
+  } catch (error) {
+    console.error("Failed to send reset email:", error);
+    throw createHttpError(500, "Failed to send the email, please try again later.");
+  }
+});
 
   export const resetPasswordController = ctrlWrapper(async (req, res) => {
     const { token, password } = req.body;
