@@ -89,25 +89,24 @@ export const createContact = ctrlWrapper(async (req, res) => {
 export const patchContact = ctrlWrapper(async (req, res) => {
   const { _id: userId } = req.user;
   const { contactId } = req.params;
-  const { name, phoneNumber, email, isFavourite, contactType } = req.body;
+  const updates = { ...req.body };
 
-  let photo = null;
   if (req.file) {
     try {
-      photo = await saveFileToCloudinary(req.file, 'contacts');
+      const photo = await saveFileToCloudinary(req.file, 'contacts');
+      updates.photo = photo; 
     } catch (error) {
       throw createError(500, 'Failed to upload photo to Cloudinary');
     }
   }
 
-  const updatedContact = await contactServices.updateContact(userId, contactId, {
-    name,
-    phoneNumber,
-    email,
-    isFavourite,
-    contactType,
-    photo,
+  Object.keys(updates).forEach((key) => {
+    if (updates[key] === undefined) {
+      delete updates[key];
+    }
   });
+
+  const updatedContact = await contactServices.updateContact(userId, contactId, updates);
 
   if (!updatedContact) {
     throw createError(404, 'Contact not found');
@@ -119,6 +118,7 @@ export const patchContact = ctrlWrapper(async (req, res) => {
     data: updatedContact,
   });
 });
+
 
 export const deleteContact = ctrlWrapper(async (req, res) => {
   const { _id: userId } = req.user;
