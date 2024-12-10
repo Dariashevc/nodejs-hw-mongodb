@@ -27,22 +27,33 @@ export const sendResetEmail = async (email) => {
         throw createHttpError(404, "User not found!");
     }
 
-    const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: "5m" });
+    const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '5m' });
 
-    const resetUrl = `${APP_DOMAIN}/reset-password?token=${token}`;
+    const resetLink = `${process.env.APP_DOMAIN}/reset-password?token=${token}`;
 
-    const mailOptions = {
-        to: email,
-        subject: "Password Reset Request",
-        text: `You can reset your password by visiting the following link: ${resetUrl}`,
-        html: `<p>You can reset your password by visiting the following link: <a href="${resetUrl}">${resetUrl}</a></p>`,
-    };
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+      secure: false, 
+    });
 
-        res.status(200).json({
+    await transporter.sendMail({
+      from: `"Your App" <${process.env.SMTP_FROM}>`,
+      to: user.email,
+      subject: "Password Reset",
+      text: `Click the link to reset your password: ${resetLink}`,
+      html: `<p>Click the link to reset your password: <a href="${resetLink}">${resetLink}</a></p>`,
+    });
+
+    res.status(200).json({
       status: 200,
       message: "Reset password email has been successfully sent.",
       data: {},
-        });
+    });
     
     try {
         await transport.sendMail({ ...mailOptions, from: SMTP_FROM });
