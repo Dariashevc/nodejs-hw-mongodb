@@ -1,13 +1,13 @@
-const sortOrderList = ["asc", "desc"];
+import { sortOrderList } from '../constants/contacts.js';
 
 export const parseSortParams = ({ sortBy, sortOrder }, sortByList) => {
-  
-  const parsedSortOrder = sortOrderList.includes(sortOrder) ? sortOrder : sortOrderList[0];
-  
-  const parsedSortBy = sortByList.includes(sortBy) ? sortBy : 'name';
+  const parsedSortOrder = [sortOrderList.ASC, sortOrderList.DESC].includes(
+    sortOrder,
+  )
+    ? sortOrder
+    : sortOrderList.ASC;
+  const parsedSortBy = sortByList.includes(sortBy) ? sortBy : '_id';
 
-  console.log(`Sorting by: ${parsedSortBy} in ${parsedSortOrder} order`);
-  
   return {
     sortBy: parsedSortBy,
     sortOrder: parsedSortOrder,
