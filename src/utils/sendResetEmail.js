@@ -21,10 +21,12 @@ const transport = nodemailer.createTransport(nodemailerConfig);
 
 
 export const sendResetEmail = async (email) => {
-    const user = await UserCollection.findOne({ email });
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
 
     if (!user) {
-        throw createHttpError(404, "User not found!");
+      throw createHttpError(404, "User not found!");
     }
 
     const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '5m' });
@@ -54,10 +56,10 @@ export const sendResetEmail = async (email) => {
       message: "Reset password email has been successfully sent.",
       data: {},
     });
-    
-    try {
-        await transport.sendMail({ ...mailOptions, from: SMTP_FROM });
-    } catch (error) {
-        throw createHttpError(500, "Failed to send the email, please try again later.");
+  } catch (error) {
+    if (!error.status) {
+      error = createHttpError(500, "Failed to send the email, please try again later.");
     }
+    next(error);
+  }
 };
