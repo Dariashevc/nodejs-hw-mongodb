@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import createHttpError from "http-errors";
-import UserCollection from "../db/models/user.js";
+import UserCollection from "../db/models/User.js";
 import "dotenv/config";
 
 const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, JWT_SECRET, APP_DOMAIN } = process.env;
@@ -38,6 +38,12 @@ export const sendResetEmail = async (email) => {
         html: `<p>You can reset your password by visiting the following link: <a href="${resetUrl}">${resetUrl}</a></p>`,
     };
 
+        res.status(200).json({
+      status: 200,
+      message: "Reset password email has been successfully sent.",
+      data: {},
+        });
+    
     try {
         await transport.sendMail({ ...mailOptions, from: SMTP_FROM });
     } catch (error) {
