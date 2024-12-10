@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import createHttpError from "http-errors";
-import UserCollection from "../db/models/User.js";
+import UserCollection from "../db/models/user.js";
 import "dotenv/config";
 
 const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, JWT_SECRET, APP_DOMAIN } = process.env;
