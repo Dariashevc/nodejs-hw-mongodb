@@ -3,8 +3,8 @@ import * as authServices from "../services/auth.js";
 import { sendResetEmail } from "../utils/sendResetEmail.js"; 
 import { ctrlWrapper } from "../utils/ctrlWrapper.js";
 import jwt from "jsonwebtoken";
-import UserCollection from "../db/models/User.js";
-import SessionCollection from "../db/models/Session.js";
+import UserCollection from "../db/models/user.js";
+import SessionCollection from "../db/models/session.js";
 
 const setupSession = (res, session) => {
     const { _id, refreshToken, refreshTokenValidUntil } = session;
