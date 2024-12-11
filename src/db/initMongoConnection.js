@@ -17,5 +17,3 @@ export const initMongoConnections = async () => {
     throw error;
   }
 };
-
-// mongodb+srv://Vlad:<db_password>@cluster0.4b6i8.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
